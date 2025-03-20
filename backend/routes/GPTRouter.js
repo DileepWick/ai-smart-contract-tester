@@ -6,14 +6,14 @@ const apiKey =  "AIzaSyAat2iMvyHFCAz-PuDS7b6slVU8EsF8ono";
 const genAI = new GoogleGenerativeAI(apiKey);
 
 const model = genAI.getGenerativeModel({
-  model: "gemini-1.5-flash"
+    model: "gemini-2.0-pro-exp-02-05",
 });
 
 const sessions = new Map();
 
 // Contract validation route
 GPTRouter.post('/contract/validate', async (req, res) => {
-  const { sessionId, apiResponse, expectedContract } = req.body;
+  const { sessionId, apiResponse, expectedContract ,apiEndpoint ,httpMethod} = req.body;
 
   if (!sessionId || typeof sessionId !== 'string') {
     return res.status(400).json({ error: 'Valid sessionId is required' });
@@ -27,6 +27,14 @@ GPTRouter.post('/contract/validate', async (req, res) => {
     return res.status(400).json({ error: 'Valid expected contract schema is required' });
   }
 
+  if (!apiEndpoint || typeof apiEndpoint !== 'string') {
+    return res.status(400).json({ error: 'Valid API endpoint is required' });
+  }
+
+  if (!httpMethod || typeof httpMethod !== 'string') {
+    return res.status(400).json({ error: 'Valid HTTP method is required' });
+  }
+
   try {
     let chatSession = sessions.get(sessionId);
     if (!chatSession) {
@@ -35,15 +43,25 @@ GPTRouter.post('/contract/validate', async (req, res) => {
     }
 
     const validationPrompt = `
-      You are a top level contract testing analysis in industry.
-      Given the following API response:
-      ${JSON.stringify(apiResponse, null, 2)}
-      
-      Validate it against the expected contract schema:
-      ${JSON.stringify(expectedContract, null, 2)}
-      
-      Provide a clear and concise validation response and possible errors.
-    `;
+    🏆 You are a top-level contract testing expert, following industry standards.  
+  
+    📌 **Details:**  
+    - 🌐 API Endpoint: ${apiEndpoint}  
+    - 🔄 HTTP Method: ${httpMethod}  
+    - 📦 API Response: ${JSON.stringify(apiResponse, null, 2)}  
+    - 📜 Contract Schema: ${JSON.stringify(expectedContract, null, 2)}  
+  
+    🛠️ **Contract Testing Analysis:**  
+    ✅ **Matching Fields:** (List fields that match with ✅)  
+    ❌ **Mismatched Fields:** (List fields that don’t match with ❌)  
+    🔍 **Missing Fields:** (List missing fields with ⚠️)  
+    ⚠️ **Possible Causes**  
+    🔧 **How to Fix**  
+  
+    🎯 Keep responses **short, structured, and clear** with relevant emojis.
+  `;
+  
+  
 
     const result = await chatSession.sendMessage(validationPrompt);
     const responseText = result.response.text();
