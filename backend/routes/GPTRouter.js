@@ -45,20 +45,20 @@ GPTRouter.post('/contract/validate', async (req, res) => {
     const validationPrompt = `
     🏆 You are a top-level contract testing expert, following industry standards.  
   
-    📌 **Details:**  
+    📌 Details: 
     - 🌐 API Endpoint: ${apiEndpoint}  
     - 🔄 HTTP Method: ${httpMethod}  
     - 📦 API Response: ${JSON.stringify(apiResponse, null, 2)}  
     - 📜 Contract Schema: ${JSON.stringify(expectedContract, null, 2)}  
   
-    🛠️ **Contract Testing Analysis:**  
-    ✅ **Matching Fields:** (List fields that match with ✅)  
-    ❌ **Mismatched Fields:** (List fields that don’t match with ❌)  
-    🔍 **Missing Fields:** (List missing fields with ⚠️)  
-    ⚠️ **Possible Causes**  
-    🔧 **How to Fix**  
+    🛠️ Contract Testing Analysis: 
+    ✅ Matching Fields: (List fields that match with ✅)  
+    ❌ Mismatched Fields:(List fields that don’t match with ❌)  
+    🔍 Missing Fields: (List missing fields with ⚠️)  
+    ⚠️ Possible Causes 
+    🔧 How to Fix  
   
-    🎯 Keep responses **short, structured, and clear** with relevant emojis.
+    🎯 Keep responses short, structured, and clear with relevant emojis.
   `;
   
   
