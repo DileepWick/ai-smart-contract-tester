@@ -2,7 +2,7 @@
 import axios from "axios";
 
 // Backend API base URL
-const API_BASE_URL = "http://localhost:5000/api/gpt"; // Adjust if needed
+const API_BASE_URL = "https://ai-driven-smart-contract-testing-production.up.railway.app/api/gpt"; // Adjust if needed
 
 // Function to validate contract (compare response with expected contract)
 export const validateContract = async (sessionId, apiResponse, expectedContract ,apiEndpoint ,httpMethod) => {
