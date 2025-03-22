@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Globe, Send, ServerCrash, CheckCircle, Code, FileJson, AlertCircle, Settings, X } from "lucide-react";
+import { Globe, Send, ServerCrash, CheckCircle, Code, FileJson, AlertCircle, Settings, X, Loader } from "lucide-react";
 import { validateContract } from "./api";
 
 const App = () => {
@@ -13,11 +13,13 @@ const App = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isCallingApi, setIsCallingApi] = useState(false);
   const [showApiConfigModal, setShowApiConfigModal] = useState(false);
+  const [showFullScreenResult, setShowFullScreenResult] = useState(false);
 
   const needsRequestBody = ["POST", "PUT", "PATCH"].includes(httpMethod);
 
   const handleCallApi = async () => {
     setIsCallingApi(true);
+    setApiResponse(null); // Clear previous response
     try {
       const options = { method: httpMethod };
       
@@ -50,6 +52,7 @@ const App = () => {
     }
     
     setIsLoading(true);
+    setValidationResult(null); // Clear previous result
     try {
       const result = await validateContract(
         sessionId, 
@@ -166,9 +169,48 @@ const App = () => {
               disabled={isCallingApi || !apiEndpoint}
               className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow transition-colors duration-200 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <Send className="mr-2 w-4 h-4" />
-              {isCallingApi ? "Calling API..." : "Call API"}
+              {isCallingApi ? (
+                <>
+                  <Loader className="animate-spin mr-2 w-4 h-4" />
+                  Calling API...
+                </>
+              ) : (
+                <>
+                  <Send className="mr-2 w-4 h-4" />
+                  Call API
+                </>
+              )}
             </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Full Screen Validation Result Modal
+  const FullScreenResultModal = () => {
+    if (!showFullScreenResult || !validationResult) return null;
+    
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-90 z-50 flex flex-col items-center justify-center p-4 text-[20px]">
+        <div className="bg-gray-900 rounded-xl shadow-2xl p-6 border border-purple-700 w-full max-w-6xl h-full max-h-screen flex flex-col">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold text-purple-400 flex items-center">
+              <CheckCircle className="mr-3 text-purple-400 w-6 h-6" />
+              Validation Result
+            </h2>
+            <button 
+              onClick={() => setShowFullScreenResult(false)} 
+              className="text-gray-400 hover:text-white transition-colors"
+            >
+              <X className="w-8 h-8" />
+            </button>
+          </div>
+          
+          <div className="flex-1 bg-gray-800 rounded-lg p-6 border border-gray-700 overflow-auto">
+            <pre className="text-base text-gray-200 font-mono whitespace-pre-wrap">
+              {validationResult}
+            </pre>
           </div>
         </div>
       </div>
@@ -232,8 +274,17 @@ const App = () => {
                   disabled={isCallingApi || !apiEndpoint}
                   className="flex-1 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow transition-colors duration-200 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <Send className="mr-2 w-4 h-4" />
-                  {isCallingApi ? "Calling API..." : "Call API"}
+                  {isCallingApi ? (
+                    <>
+                      <Loader className="animate-spin mr-2 w-5 h-5" />
+                      Calling API...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="mr-2 w-5 h-5" />
+                      Call API
+                    </>
+                  )}
                 </button>
               </div>
             </div>
@@ -260,12 +311,12 @@ const App = () => {
                 >
                   {isLoading ? (
                     <>
-                      <ServerCrash className="animate-pulse mr-2 w-4 h-4" />
-                      Processing...
+                      <Loader className="animate-spin mr-2 w-5 h-5" />
+                      Validating...
                     </>
                   ) : (
                     <>
-                      <CheckCircle className="mr-2 w-4 h-4" />
+                      <CheckCircle className="mr-2 w-5 h-5" />
                       Validate Contract
                     </>
                   )}
@@ -283,7 +334,12 @@ const App = () => {
                 API Response
               </h3>
               <div className="bg-gray-900 rounded-lg p-4 border border-gray-700 h-96 overflow-auto">
-                {apiResponse ? (
+                {isCallingApi ? (
+                  <div className="h-full flex items-center justify-center text-gray-300 flex-col">
+                    <Loader className="w-12 h-12 mb-4 animate-spin text-blue-400" />
+                    <p className="text-lg">Fetching API response...</p>
+                  </div>
+                ) : apiResponse ? (
                   <pre className="text-xs text-gray-300 font-mono whitespace-pre-wrap">
                     {JSON.stringify(apiResponse, null, 2)}
                   </pre>
@@ -296,15 +352,37 @@ const App = () => {
               </div>
             </div>
             
-            {/* Validation Result - Expanded */}
+            {/* Validation Result - With Expandable Option */}
             <div className={`bg-gray-800 rounded-xl shadow-xl p-6 border ${validationResult ? 'border-purple-700' : 'border-gray-700'}`}>
-              <h3 className="text-xl font-semibold text-gray-200 mb-3 flex items-center">
-                <CheckCircle className="mr-2 text-purple-400 w-5 h-5" />
-                Validation Result
-              </h3>
+              <div className="flex justify-between items-center mb-3">
+                <h3 className="text-xl font-semibold text-gray-200 flex items-center">
+                  <CheckCircle className="mr-2 text-purple-400 w-5 h-5" />
+                  Validation Result
+                </h3>
+                {validationResult && (
+                  <button
+                    onClick={() => setShowFullScreenResult(true)}
+                    className="px-3 py-1 bg-purple-700 hover:bg-purple-600 text-white text-sm font-medium rounded-lg shadow transition-colors duration-200"
+                  >
+                    Expand View
+                  </button>
+                )}
+              </div>
+              
               <div className="bg-gray-900 rounded-lg p-4 border border-gray-700 h-96 overflow-auto">
-                {validationResult ? (
-                  <pre className="text-xs text-gray-300 font-mono whitespace-pre-wrap">
+                {isLoading ? (
+                  <div className="h-full flex items-center justify-center text-gray-300 flex-col">
+                    <div className="mb-4 relative">
+                      <Loader className="w-16 h-16 animate-spin text-purple-500" />
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <ServerCrash className="w-8 h-8 text-purple-300" />
+                      </div>
+                    </div>
+                    <p className="text-lg">Validating contract...</p>
+                    <p className="text-sm text-gray-500 mt-2">This may take a moment</p>
+                  </div>
+                ) : validationResult ? (
+                  <pre className="text-sm text-gray-300 font-mono whitespace-pre-wrap">
                     {validationResult}
                   </pre>
                 ) : (
@@ -326,6 +404,9 @@ const App = () => {
       
       {/* API Configuration Modal */}
       <ApiConfigModal />
+      
+      {/* Full Screen Validation Result Modal */}
+      <FullScreenResultModal />
     </div>
   );
 };
