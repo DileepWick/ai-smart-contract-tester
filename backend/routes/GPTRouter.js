@@ -6,7 +6,7 @@ const apiKey = "AIzaSyAat2iMvyHFCAz-PuDS7b6slVU8EsF8ono";
 const genAI = new GoogleGenerativeAI(apiKey);
 
 const model = genAI.getGenerativeModel({
-  model: "gemini-1.5-flash-8b",
+  model: "gemini-2.0-flash-thinking-exp-01-21",
 });
 
 const sessions = new Map();
