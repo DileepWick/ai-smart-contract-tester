@@ -62,6 +62,8 @@ ${JSON.stringify(expectedContract, null, 2)}
   - If types do not match 🎭, highlight the mismatch.  
   - If everything is correct ✅, confirm that the contract is valid
 
+Use the following format for the response:
+
 🛠️ 📊 **Results**
 
 ✅/❌ Overall Result: (Pass/Fail here)
