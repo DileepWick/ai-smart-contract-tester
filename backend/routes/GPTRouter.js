@@ -56,6 +56,12 @@ ${JSON.stringify(apiResponse, null, 2)}
 📜 Expected Contract:
 ${JSON.stringify(expectedContract, null, 2)}
 
+  Perform a **strict contract validation** of the API response against the contract schema.  
+  - If a **required field** is missing ❌, **fail the test** and explain why.  
+  - If an **optional field** is missing ⚠️, mention it but do not fail the test.  
+  - If types do not match 🎭, highlight the mismatch.  
+  - If everything is correct ✅, confirm that the contract is valid
+
 🛠️ 📊 **Results**
 
 ✅/❌ Overall Result: (Pass/Fail here)
