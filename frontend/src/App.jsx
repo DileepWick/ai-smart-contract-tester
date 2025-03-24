@@ -224,7 +224,7 @@ const App = () => {
         <div className="flex items-center justify-center mb-4 sm:mb-8 pt-2 sm:pt-4">
           <Code className="text-blue-400 mr-2 sm:mr-3 w-6 sm:w-8 h-6 sm:h-8" />
           <h1 className="text-xl sm:text-3xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
-            AI-Powered Contract Testing
+            AI-Powered CDCT 
           </h1>
         </div>
         
