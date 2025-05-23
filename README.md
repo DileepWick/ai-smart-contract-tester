@@ -66,10 +66,4 @@ Open `http://localhost:5173` to access the app.
 - Add authentication and user history
 - Improve UI/UX and add blockchain interaction
 
-## 📄 License
 
-MIT
-
----
-
-Made with ❤️ by [Your Name](https://github.com/yourusername)
