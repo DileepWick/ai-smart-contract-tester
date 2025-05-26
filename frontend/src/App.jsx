@@ -17,6 +17,8 @@ const App = () => {
 
   const needsRequestBody = ["POST", "PUT", "PATCH"].includes(httpMethod);
 
+
+  // Function to handle API call
   const handleCallApi = async () => {
     setIsCallingApi(true);
     setApiResponse(null); // Clear previous response
