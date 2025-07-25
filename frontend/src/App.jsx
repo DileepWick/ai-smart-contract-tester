@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Globe, Send, ServerCrash, CheckCircle, Code, FileJson, AlertCircle, Settings, X, Loader } from "lucide-react";
+import { Globe, Send, ServerCrash, CheckCircle, Code, FileJson, AlertCircle, Settings, X, Loader, Eye } from "lucide-react";
 import { validateContract } from "./api";
 
 const App = () => {
@@ -17,11 +17,47 @@ const App = () => {
 
   const needsRequestBody = ["POST", "PUT", "PATCH"].includes(httpMethod);
 
+  // Schema builder functions
+  const addSchemaField = () => {
+    setSchemaFields([...schemaFields, { name: "", type: "string", required: false, description: "" }]);
+  };
+
+  const removeSchemaField = (index) => {
+    if (schemaFields.length > 1) {
+      setSchemaFields(schemaFields.filter((_, i) => i !== index));
+    }
+  };
+
+  const updateSchemaField = (index, field, value) => {
+    const updated = schemaFields.map((item, i) => 
+      i === index ? { ...item, [field]: value } : item
+    );
+    setSchemaFields(updated);
+  };
+
+  const generateContractFromSchema = () => {
+    const contract = {
+      type: "object",
+      properties: {},
+      required: schemaFields.filter(f => f.required && f.name).map(f => f.name)
+    };
+
+    schemaFields.forEach(field => {
+      if (field.name) {
+        contract.properties[field.name] = {
+          type: field.type,
+          ...(field.description && { description: field.description })
+        };
+      }
+    });
+
+    setExpectedContract([contract]);
+  };
 
   // Function to handle API call
   const handleCallApi = async () => {
     setIsCallingApi(true);
-    setApiResponse(null); // Clear previous response
+    setApiResponse(null);
     try {
       const options = { method: httpMethod };
       
@@ -31,7 +67,6 @@ const App = () => {
           options.headers = { 'Content-Type': 'application/json' };
           options.body = JSON.stringify(bodyObj);
         } catch (err) {
-          // If not valid JSON, try sending as plain text
           options.headers = { 'Content-Type': 'text/plain' };
           options.body = requestBody;
         }
@@ -54,7 +89,7 @@ const App = () => {
     }
     
     setIsLoading(true);
-    setValidationResult(null); // Clear previous result
+    setValidationResult(null);
     try {
       const result = await validateContract(
         sessionId, 
@@ -86,47 +121,47 @@ const App = () => {
     if (!showApiConfigModal) return null;
     
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center p-4">
-        <div className="bg-gray-800 rounded-xl shadow-2xl p-4 sm:p-6 border border-gray-700 w-full max-w-2xl max-h-full overflow-auto">
-          <div className="flex justify-between items-center mb-4 sm:mb-6">
-            <h2 className="text-lg sm:text-xl font-semibold text-gray-200 flex items-center">
-              <Globe className="mr-2 text-blue-400 w-5 h-5" />
+      <div className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl shadow-2xl p-6 border border-gray-200 w-full max-w-2xl max-h-full overflow-auto">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-xl font-bold text-gray-900 flex items-center">
+              <Globe className="mr-3 text-black w-6 h-6" />
               API Configuration
             </h2>
             <button 
               onClick={() => setShowApiConfigModal(false)} 
-              className="text-gray-400 hover:text-white transition-colors"
+              className="text-gray-400 hover:text-black transition-colors"
             >
               <X className="w-6 h-6" />
             </button>
           </div>
           
           {/* API Endpoint */}
-          <div className="mb-4">
-            <label htmlFor="apiEndpoint" className="text-sm font-medium text-gray-300 block mb-2">
+          <div className="mb-6">
+            <label htmlFor="apiEndpoint" className="text-sm font-semibold text-gray-900 block mb-2">
               API Endpoint
             </label>
             <div className="relative">
               <input
                 type="url"
                 id="apiEndpoint"
-                className="w-full p-2 sm:p-3 pl-8 sm:pl-10 bg-gray-900 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                className="w-full p-3 pl-10 bg-white border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent text-sm"
                 placeholder="https://api.example.com/endpoint"
                 value={apiEndpoint}
                 onChange={(e) => setApiEndpoint(e.target.value)}
               />
-              <Globe className="absolute left-2 sm:left-3 top-2.5 sm:top-3.5 text-gray-500 w-4 h-4" />
+              <Globe className="absolute left-3 top-3.5 text-gray-400 w-4 h-4" />
             </div>
           </div>
           
           {/* HTTP Method */}
-          <div className="mb-4">
-            <label htmlFor="httpMethod" className="text-sm font-medium text-gray-300 block mb-2">
+          <div className="mb-6">
+            <label htmlFor="httpMethod" className="text-sm font-semibold text-gray-900 block mb-2">
               HTTP Method
             </label>
             <select
               id="httpMethod"
-              className="w-full p-2 sm:p-3 bg-gray-900 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+              className="w-full p-3 bg-white border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-black text-sm"
               value={httpMethod}
               onChange={(e) => setHttpMethod(e.target.value)}
             >
@@ -140,14 +175,14 @@ const App = () => {
           
           {/* Request Body */}
           {needsRequestBody && (
-            <div className="mb-4 sm:mb-6">
-              <label htmlFor="requestBody" className="text-sm font-medium text-gray-300 block mb-2 flex items-center">
-                <FileJson className="mr-2 text-blue-400 w-4 h-4" />
+            <div className="mb-6">
+              <label htmlFor="requestBody" className="text-sm font-semibold text-gray-900 block mb-2 flex items-center">
+                <FileJson className="mr-2 text-black w-4 h-4" />
                 Request Body
               </label>
               <textarea
                 id="requestBody"
-                className="w-full p-2 sm:p-3 bg-gray-900 border border-gray-700 rounded-lg font-mono text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 h-32 sm:h-56"
+                className="w-full p-3 bg-white border-2 border-gray-200 rounded-xl font-mono text-sm focus:outline-none focus:ring-2 focus:ring-black h-56"
                 placeholder="Enter request body (JSON format preferred)"
                 value={requestBody}
                 onChange={(e) => setRequestBody(e.target.value)}
@@ -156,10 +191,10 @@ const App = () => {
           )}
           
           {/* Footer Buttons */}
-          <div className="flex flex-col sm:flex-row sm:justify-end gap-3 mt-4 sm:mt-6">
+          <div className="flex flex-col sm:flex-row sm:justify-end gap-3 mt-6">
             <button
               onClick={() => setShowApiConfigModal(false)}
-              className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white font-medium rounded-lg shadow transition-colors duration-200 w-full sm:w-auto"
+              className="px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-900 font-semibold rounded-xl transition-colors duration-200 w-full sm:w-auto"
             >
               Close
             </button>
@@ -169,7 +204,7 @@ const App = () => {
                 handleCallApi();
               }}
               disabled={isCallingApi || !apiEndpoint}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow transition-colors duration-200 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto mt-2 sm:mt-0"
+              className="px-6 py-3 bg-black hover:bg-gray-800 text-white font-semibold rounded-xl transition-colors duration-200 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto"
             >
               {isCallingApi ? (
                 <>
@@ -194,23 +229,23 @@ const App = () => {
     if (!showFullScreenResult || !validationResult) return null;
     
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-90 z-50 flex flex-col items-center justify-center p-2 sm:p-4">
-        <div className="bg-gray-900 rounded-xl shadow-2xl p-3 sm:p-6 border border-purple-700 w-full max-w-6xl h-full max-h-screen flex flex-col">
-          <div className="flex justify-between items-center mb-3 sm:mb-6">
-            <h2 className="text-xl sm:text-2xl font-bold text-purple-400 flex items-center">
-              <CheckCircle className="mr-2 sm:mr-3 text-purple-400 w-5 sm:w-6 h-5 sm:h-6" />
+      <div className="fixed inset-0 bg-black bg-opacity-95 z-50 flex flex-col items-center justify-center p-4">
+        <div className="bg-white rounded-2xl shadow-2xl p-6 border border-gray-200 w-full max-w-6xl h-full max-h-screen flex flex-col">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold text-gray-900 flex items-center">
+              <CheckCircle className="mr-3 text-black w-6 h-6" />
               Validation Result
             </h2>
             <button 
               onClick={() => setShowFullScreenResult(false)} 
-              className="text-gray-400 hover:text-white transition-colors"
+              className="text-gray-400 hover:text-black transition-colors"
             >
-              <X className="w-6 sm:w-8 h-6 sm:h-8" />
+              <X className="w-8 h-8" />
             </button>
           </div>
           
-          <div className="flex-1 bg-gray-800 rounded-lg p-3 sm:p-6 border border-gray-700 overflow-auto">
-            <pre className="text-sm sm:text-base text-gray-200 font-mono whitespace-pre-wrap">
+          <div className="flex-1 bg-gray-50 rounded-xl p-6 border-2 border-gray-200 overflow-auto">
+            <pre className="text-sm text-gray-900 font-mono whitespace-pre-wrap">
               {validationResult}
             </pre>
           </div>
@@ -220,70 +255,70 @@ const App = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 text-gray-100">
-      <div className="w-full max-w-6xl mx-auto p-3 sm:p-6">
+    <div className="min-h-screen bg-white text-gray-900">
+      <div className="w-full max-w-7xl mx-auto p-6">
         {/* Header */}
-        <div className="flex items-center justify-center mb-4 sm:mb-8 pt-2 sm:pt-4">
-          <Code className="text-blue-400 mr-2 sm:mr-3 w-6 sm:w-8 h-6 sm:h-8" />
-          <h1 className="text-xl sm:text-3xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+        <div className="flex items-center justify-center mb-8 pt-4">
+          <Code className="text-black mr-3 w-8 h-8" />
+          <h1 className="text-3xl font-bold text-black">
             AI-Powered CDCT 
           </h1>
         </div>
         
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Left Panel - Contract Config */}
-          <div className="space-y-4 sm:space-y-6">
+          <div className="space-y-6">
             {/* API Configuration Summary */}
-            <div className="bg-gray-800 rounded-xl shadow-xl p-3 sm:p-6 border border-gray-700">
-              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-3 sm:mb-4 gap-3">
-                <h2 className="text-lg sm:text-xl font-semibold text-gray-200 flex items-center">
-                  <Globe className="mr-2 text-blue-400 w-5 h-5" />
-                  API Summary
+            <div className="bg-white rounded-2xl shadow-lg p-6 border-2 border-gray-200">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 gap-3">
+                <h2 className="text-xl font-bold text-gray-900 flex items-center">
+                  <Globe className="mr-2 text-black w-5 h-5" />
+                  API Configuration
                 </h2>
                 <button
                   onClick={() => setShowApiConfigModal(true)}
-                  className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow transition-colors duration-200 flex items-center justify-center text-sm w-full sm:w-auto"
+                  className="px-4 py-2 bg-black hover:bg-gray-800 text-white font-semibold rounded-xl transition-colors duration-200 flex items-center justify-center text-sm w-full sm:w-auto"
                 >
                   <Settings className="mr-2 w-4 h-4" />
                   Configure API
                 </button>
               </div>
               
-              <div className="bg-gray-900 rounded-lg p-3 sm:p-4 border border-gray-700">
-                <div className="grid grid-cols-1 gap-2">
+              <div className="bg-gray-50 rounded-xl p-4 border-2 border-gray-100">
+                <div className="grid grid-cols-1 gap-3">
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-400">Endpoint:</span>
-                    <span className="text-gray-200 font-mono truncate max-w-xs">{apiEndpoint || "Not set"}</span>
+                    <span className="text-gray-600 font-medium">Endpoint:</span>
+                    <span className="text-gray-900 font-mono truncate max-w-xs">{apiEndpoint || "Not configured"}</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-400">Method:</span>
-                    <span className="text-gray-200 font-mono">{httpMethod}</span>
+                    <span className="text-gray-600 font-medium">Method:</span>
+                    <span className="text-gray-900 font-mono font-bold">{httpMethod}</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-400">Body:</span>
-                    <span className="text-gray-200 font-mono">
+                    <span className="text-gray-600 font-medium">Body:</span>
+                    <span className="text-gray-900 font-mono">
                       {needsRequestBody 
-                        ? (requestBody ? "Provided" : "Not provided") 
+                        ? (requestBody ? "✓ Provided" : "⚠ Not provided") 
                         : "N/A"}
                     </span>
                   </div>
                 </div>
               </div>
               
-              <div className="mt-3 sm:mt-4 flex">
+              <div className="mt-4">
                 <button
                   onClick={handleCallApi}
                   disabled={isCallingApi || !apiEndpoint}
-                  className="flex-1 px-3 py-2 sm:px-4 sm:py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow transition-colors duration-200 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
+                  className="w-full px-4 py-3 bg-black hover:bg-gray-800 text-white font-semibold rounded-xl transition-colors duration-200 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isCallingApi ? (
                     <>
-                      <Loader className="animate-spin mr-2 w-4 sm:w-5 h-4 sm:h-5" />
+                      <Loader className="animate-spin mr-2 w-5 h-5" />
                       Calling API...
                     </>
                   ) : (
                     <>
-                      <Send className="mr-2 w-4 sm:w-5 h-4 sm:h-5" />
+                      <Send className="mr-2 w-5 h-5" />
                       Call API
                     </>
                   )}
@@ -292,33 +327,51 @@ const App = () => {
             </div>
             
             {/* Expected Contract */}
-            <div className="bg-gray-800 rounded-xl shadow-xl p-3 sm:p-6 border border-gray-700">
-              <label htmlFor="contract" className="text-lg sm:text-xl font-semibold text-gray-200 block mb-3 sm:mb-4 flex items-center">
-                <FileJson className="mr-2 text-purple-400 w-5 h-5" />
-                Expected Contract (JSON)
-              </label>
+            <div className="bg-white rounded-2xl shadow-lg p-6 border-2 border-gray-200">
+              <h2 className="text-xl font-bold text-gray-900 flex items-center mb-4">
+                <FileJson className="mr-2 text-black w-5 h-5" />
+                Expected Contract (JSON Schema)
+              </h2>
+              
+              <div className="text-sm text-gray-600 mb-4">
+                Define the expected API response structure in JSON format:
+              </div>
+              
               <textarea
-                id="contract"
-                className="w-full p-2 sm:p-3 bg-gray-900 border border-gray-700 rounded-lg font-mono text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 h-64 sm:h-96"
-                placeholder='Enter expected contract (JSON format)'
+                className="w-full p-3 bg-gray-50 border-2 border-gray-200 rounded-xl font-mono text-sm focus:outline-none focus:ring-2 focus:ring-black h-96"
+                placeholder='Enter expected contract (JSON format)&#10;&#10;Example:&#10;{&#10;  "type": "object",&#10;  "properties": {&#10;    "id": {"type": "number"},&#10;    "name": {"type": "string"},&#10;    "email": {"type": "string"}&#10;  },&#10;  "required": ["id", "name"]&#10;}'
                 defaultValue={JSON.stringify(expectedContract, null, 2)}
                 onChange={handleContractChange}
               />
               
-              <div className="mt-3 sm:mt-4">
+              <div className="mt-4 flex space-x-3">
+                <button
+                  onClick={() => {
+                    try {
+                      const parsed = JSON.parse(document.querySelector('textarea').value);
+                      alert(`Preview:\n\n${JSON.stringify(parsed, null, 2)}`);
+                    } catch (e) {
+                      alert('Invalid JSON format. Please check your syntax.');
+                    }
+                  }}
+                  className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-900 font-semibold rounded-xl transition-colors duration-200 flex items-center justify-center"
+                >
+                  <Eye className="mr-2 w-4 h-4" />
+                  Preview Schema
+                </button>
                 <button
                   onClick={handleValidateContract}
-                  disabled={isLoading || !apiResponse || !expectedContract}
-                  className="w-full px-3 py-2 sm:px-4 sm:py-3 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg shadow transition-colors duration-200 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
+                  disabled={isLoading || !apiResponse || !expectedContract.length}
+                  className="flex-1 px-4 py-3 bg-black hover:bg-gray-800 text-white font-semibold rounded-xl transition-colors duration-200 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isLoading ? (
                     <>
-                      <Loader className="animate-spin mr-2 w-4 sm:w-5 h-4 sm:h-5" />
-                      Validating...
+                      <Loader className="animate-spin mr-2 w-5 h-5" />
+                      Validating Contract...
                     </>
                   ) : (
                     <>
-                      <CheckCircle className="mr-2 w-4 sm:w-5 h-4 sm:h-5" />
+                      <CheckCircle className="mr-2 w-5 h-5" />
                       Validate Contract
                     </>
                   )}
@@ -328,69 +381,71 @@ const App = () => {
           </div>
           
           {/* Right Panel - Results */}
-          <div className="space-y-4 sm:space-y-6">
+          <div className="space-y-6">
             {/* API Response Display */}
-            <div className="bg-gray-800 rounded-xl shadow-xl p-3 sm:p-6 border border-gray-700">
-              <h3 className="text-lg sm:text-xl font-semibold text-gray-200 mb-2 sm:mb-3 flex items-center">
-                <Code className="mr-2 text-blue-400 w-5 h-5" />
+            <div className="bg-white rounded-2xl shadow-lg p-6 border-2 border-gray-200">
+              <h3 className="text-xl font-bold text-gray-900 mb-3 flex items-center">
+                <Code className="mr-2 text-black w-5 h-5" />
                 API Response
               </h3>
-              <div className="bg-gray-900 rounded-lg p-3 sm:p-4 border border-gray-700 h-64 sm:h-96 overflow-auto">
+              <div className="bg-gray-50 rounded-xl p-4 border-2 border-gray-100 h-96 overflow-auto">
                 {isCallingApi ? (
-                  <div className="h-full flex items-center justify-center text-gray-300 flex-col">
-                    <Loader className="w-10 sm:w-12 h-10 sm:h-12 mb-3 sm:mb-4 animate-spin text-blue-400" />
-                    <p className="text-base sm:text-lg">Fetching API response...</p>
+                  <div className="h-full flex items-center justify-center text-gray-600 flex-col">
+                    <Loader className="w-12 h-12 mb-4 animate-spin text-black" />
+                    <p className="text-lg font-medium">Fetching API response...</p>
                   </div>
                 ) : apiResponse ? (
-                  <pre className="text-xs text-gray-300 font-mono whitespace-pre-wrap">
+                  <pre className="text-xs text-gray-900 font-mono whitespace-pre-wrap">
                     {JSON.stringify(apiResponse, null, 2)}
                   </pre>
                 ) : (
-                  <div className="h-full flex items-center justify-center text-gray-500 flex-col">
-                    <AlertCircle className="w-8 sm:w-10 h-8 sm:h-10 mb-2 sm:mb-3 opacity-50" />
-                    <p className="text-center">No API response yet. Click "Call API" to fetch data.</p>
+                  <div className="h-full flex items-center justify-center text-gray-400 flex-col">
+                    <AlertCircle className="w-10 h-10 mb-3 opacity-50" />
+                    <p className="text-center font-medium">No API response yet</p>
+                    <p className="text-center text-sm">Configure and call your API to see the response</p>
                   </div>
                 )}
               </div>
             </div>
             
-            {/* Validation Result - With Expandable Option */}
-            <div className={`bg-gray-800 rounded-xl shadow-xl p-3 sm:p-6 border ${validationResult ? 'border-purple-700' : 'border-gray-700'}`}>
-              <div className="flex justify-between items-center mb-2 sm:mb-3">
-                <h3 className="text-lg sm:text-xl font-semibold text-gray-200 flex items-center">
-                  <CheckCircle className="mr-2 text-purple-400 w-5 h-5" />
+            {/* Validation Result */}
+            <div className={`bg-white rounded-2xl shadow-lg p-6 border-2 ${validationResult ? 'border-black' : 'border-gray-200'}`}>
+              <div className="flex justify-between items-center mb-3">
+                <h3 className="text-xl font-bold text-gray-900 flex items-center">
+                  <CheckCircle className="mr-2 text-black w-5 h-5" />
                   Validation Result
                 </h3>
                 {validationResult && (
                   <button
                     onClick={() => setShowFullScreenResult(true)}
-                    className="px-2 sm:px-3 py-1 bg-purple-700 hover:bg-purple-600 text-white text-xs sm:text-sm font-medium rounded-lg shadow transition-colors duration-200"
+                    className="px-3 py-1 bg-black hover:bg-gray-800 text-white text-sm font-semibold rounded-lg transition-colors duration-200"
                   >
-                    Expand View
+                    Full View
                   </button>
                 )}
               </div>
               
-              <div className="bg-gray-900 rounded-lg p-3 sm:p-4 border border-gray-700 h-64 sm:h-96 overflow-auto">
+              <div className="bg-gray-50 rounded-xl p-4 border-2 border-gray-100 h-96 overflow-auto">
                 {isLoading ? (
-                  <div className="h-full flex items-center justify-center text-gray-300 flex-col">
-                    <div className="mb-3 sm:mb-4 relative">
-                      <Loader className="w-12 sm:w-16 h-12 sm:h-16 animate-spin text-purple-500" />
+                  <div className="h-full flex items-center justify-center text-gray-600 flex-col">
+                    <div className="mb-4 relative">
+                      <Loader className="w-16 h-16 animate-spin text-black" />
                       <div className="absolute inset-0 flex items-center justify-center">
-                        <ServerCrash className="w-6 sm:w-8 h-6 sm:h-8 text-purple-300" />
+                        <ServerCrash className="w-8 h-8 text-gray-400" />
                       </div>
                     </div>
-                    <p className="text-base sm:text-lg">Validating contract...</p>
-                    <p className="text-xs sm:text-sm text-gray-500 mt-2">This may take a moment</p>
+                    <p className="text-lg font-medium">Validating contract...</p>
+                    <p className="text-sm text-gray-500 mt-2">This may take a moment</p>
                   </div>
                 ) : validationResult ? (
-                  <pre className="text-xs sm:text-sm text-gray-300 font-mono whitespace-pre-wrap">
+                  <pre className="text-sm text-gray-900 font-mono whitespace-pre-wrap">
                     {validationResult}
                   </pre>
                 ) : (
-                  <div className="h-full flex items-center justify-center text-gray-500 flex-col">
-                    <AlertCircle className="w-8 sm:w-10 h-8 sm:h-10 mb-2 sm:mb-3 opacity-50" />
-                    <p className="text-center">Validation results will appear here after you validate the contract</p>
+                  <div className="h-full flex items-center justify-center text-gray-400 flex-col">
+                    <AlertCircle className="w-10 h-10 mb-3 opacity-50" />
+                    <p className="text-center font-medium">Validation results will appear here</p>
+                    <p className="text-center text-sm">First call your API, then validate the contract</p>
                   </div>
                 )}
               </div>
@@ -399,8 +454,8 @@ const App = () => {
         </div>
         
         {/* Footer */}
-        <div className="mt-4 sm:mt-8 text-center text-gray-500 text-xs sm:text-sm">
-          <p>AI-Powered Contract Testing Tool • v1.0.0</p>
+        <div className="mt-8 text-center text-gray-500 text-sm">
+          <p className="font-medium">AI-Powered Contract Testing Tool • v1.0.0</p>
         </div>
       </div>
       
